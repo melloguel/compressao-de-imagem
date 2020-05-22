@@ -53,10 +53,10 @@ function decompress(compressedImg, method, k, h)
 
 	xc = h;
 	for x = 1:k+1
-	  xc  -= (h/k+1);
+	  xc  -= (h/(k+1));
 	  yc = 0;
 	  for y = 1:k+1
-	    yc += (h/k+1);
+	    yc += (h/(k+1));
 	    if (i == x)
 	      var = 1;
 	    else
@@ -73,114 +73,205 @@ function decompress(compressedImg, method, k, h)
 
   if (method == 2)
 
-    
-    f_ws = zeros(r, r);
+    ## Derivadas da função f para as cores Vermelho (1), Verde (2), Azul (3)
+    f_1s = zeros(r, r, 2);
+    f_2s = zeros(r, r, 2);
+    f_3s = zeros(r, r, 2);
     
     for i = 1:r
       ii = (k+1) * (i - 1) + 1;
-	for j = 1:r
-	  jj = (k+1) * (j - 1) + 1;
-	  decImg(ii, jj, 1:3) = imgRead(i, j, 1:3);
+    	for j = 1:r
+    	  jj = (k+1) * (j - 1) + 1;
+    	  decImg(ii, jj, 1:3) = imgRead(i, j, 1:3);
 
+    	  if (i == 1)
+    	    f_1s(1, j, 1) = fd(imgRead(1, j, 1), imgRead(2, j, 1), h);
+    	    f_2s(1, j, 1) = fd(imgRead(1, j, 2), imgRead(2, j, 2), h);
+    	    f_3s(1, j, 1) = fd(imgRead(1, j, 3), imgRead(2, j, 3), h);	    
+    	  elseif(i == r)
+    	    f_1s(r, j, 1) = fd(imgRead(r-1, j, 1), imgRead(r, j, 1), h);
+    	    f_2s(r, j, 1) = fd(imgRead(r-1, j, 2), imgRead(r, j, 2), h);
+    	    f_3s(r, j, 1) = fd(imgRead(r-1, j, 3), imgRead(r, j, 3), h);	    
+    	  else
+    	    f_1s(i, j, 1) = fd(imgRead(i-1, j, 1), imgRead(i+1, j, 1), 2*h);
+    	    f_2s(i, j, 1) = fd(imgRead(i-1, j, 2), imgRead(i+1, j, 2), 2*h);
+    	    f_3s(i, j, 1) = fd(imgRead(i-1, j, 3), imgRead(i+1, j, 3), 2*h);	    
+    	  endif
 
-	  if (i == 1)
-	    f_ws(1, j) = fd(imgRead(1, j, w), imgRead(2, j, w), h);	    
-	  elseif(i == r)
-	    f_ws(r, j) = fd(imgRead(r-1, j, w), imgRead(r, j, w), h);
-	  else
-	    f_ws(i, j) = fd(imgRead(i-1, j, w), imgRead(i+1, j, w), 2*h);
-	  endif
-
-	  if (j == 1)
-	    f_ws(i, j) = fd(imgRead(i, 2, w), imgRead(i, 1, w), h);	    
-	  elseif(j == r)
-	    f_ws(i, r) = fd(imgRead(i, r, w), imgRead(i, r-1, w), h);
-	  else
-	    f_ws(i, j) = fd(imgRead(i, j+1, w), imgRead(i, j-1, w), 2*h);
-	  endif
+    	  if (j == 1)
+    	    f_1s(i, 1, 2) = fd(imgRead(i, 2, 1), imgRead(i, 1, 1), h);
+    	    f_2s(i, 1, 2) = fd(imgRead(i, 2, 2), imgRead(i, 1, 2), h);
+    	    f_3s(i, 1, 2) = fd(imgRead(i, 2, 3), imgRead(i, 1, 3), h);	    	    
+    	  elseif(j == r)
+    	    f_1s(i, r, 2) = fd(imgRead(i, r, 1), imgRead(i, r-1, 1), h);
+    	    f_2s(i, r, 2) = fd(imgRead(i, r, 2), imgRead(i, r-1, 2), h);
+    	    f_3s(i, r, 2) = fd(imgRead(i, r, 3), imgRead(i, r-1, 3), h);	    
+    	  else
+    	    f_1s(i, j, 2) = fd(imgRead(i, j+1, 1), imgRead(i, j-1, 1), 2*h);
+    	    f_2s(i, j, 2) = fd(imgRead(i, j+1, 2), imgRead(i, j-1, 2), 2*h);
+    	    f_3s(i, j, 2) = fd(imgRead(i, j+1, 3), imgRead(i, j-1, 3), 2*h);	    
+    	  endif
 	  
-	endfor
+    	endfor
     endfor
 
 
     matrizB = [[1, 0,   0,     0];
     	       [1, h, h*h, h*h*h];
     	       [0, 1,   0,     0];
-    	       [0, 1,  2h, 3*h*h]];
+    	       [0, 1,  2*h, 3*h*h]];
+    
     invB = inv(matrizB);
     transInvB = invB';
 
-    for i = k+2:k+1:rows(decImg)
-      for j = 1:k+1:rows(decImg) -k -1
 
-    	f_ws = zeros(4, 4);
+    matrizF1 = zeros(4, 4); ## Vermelho
+    matrizF2 = zeros(4, 4); ## Verde
+    matrizF3 = zeros(4, 4); ## Azul   
+    
+    ## d2_w = zeros(4, 4)
 
-    	f_ws(1, 1) = decImg(i, j, w);	  
-    	f_ws(1, 2) = decImg(i, j+k, w); 
-    	f_ws(2, 1) = decImg(i-k, j, w); 
-    	f_ws(2, 2) = decImg(i-k, j+k, w);	
+    
+    for i = r:-1:2
+      x = (k+1) * (i - 1) + 1;
+      for j = 1:r-1
+    	y = (k+1) * (j - 1) + 1; 
 
+	
+    	## Cor Vermelho (1)
+    	matrizF1(1, 1) = imgRead(i, j, 1);
+    	matrizF1(1, 2) = imgRead(i, j+1, 1);
+    	matrizF1(2, 1) = imgRead(i-1, j, 1);
+    	matrizF1(2, 2) = imgRead(i-1, j+1, 1);
+
+    	matrizF1(3, 1) = f_1s(i, j, 1);
+    	matrizF1(3, 2) = f_1s(i, j+1, 1);
+    	matrizF1(4, 1) = f_1s(i-1, j, 1);
+    	matrizF1(4, 2) = f_1s(i-1, j+1, 1);
+
+    	matrizF1(1, 3) = f_1s(i, j, 2);
+    	matrizF1(1, 4) = f_1s(i, j+1, 2);
+    	matrizF1(2, 3) = f_1s(i-1, j, 2);
+    	matrizF1(2, 4) = f_1s(i-1, j+1, 2);
+
+
+    	## Cor Verde (2)
+    	matrizF2(1, 1) = imgRead(i, j, 2);
+    	matrizF2(1, 2) = imgRead(i, j+1, 2);
+    	matrizF2(2, 1) = imgRead(i-1, j, 2);
+    	matrizF2(2, 2) = imgRead(i-1, j+1, 2);
+
+    	matrizF2(3, 1) = f_2s(i, j, 1);
+    	matrizF2(3, 2) = f_2s(i, j+1, 1);
+    	matrizF2(4, 1) = f_2s(i-1, j, 1);
+    	matrizF2(4, 2) = f_2s(i-1, j+1, 1);
+
+    	matrizF2(1, 3) = f_2s(i, j, 2);
+    	matrizF2(1, 4) = f_2s(i, j+1, 2);
+    	matrizF2(2, 3) = f_2s(i-1, j, 2);
+    	matrizF2(2, 4) = f_2s(i-1, j+1, 2);
+
+
+    	## Cor Azul (3)
+    	matrizF3(1, 1) = imgRead(i, j, 3);
+    	matrizF3(1, 2) = imgRead(i, j+1, 3);
+    	matrizF3(2, 1) = imgRead(i-1, j, 3);
+    	matrizF3(2, 2) = imgRead(i-1, j+1, 3);
+
+    	matrizF3(3, 1) = f_3s(i, j, 1);
+    	matrizF3(3, 2) = f_3s(i, j+1, 1);
+    	matrizF3(4, 1) = f_3s(i-1, j, 1);
+    	matrizF3(4, 2) = f_3s(i-1, j+1, 1);
+
+    	matrizF3(1, 3) = f_3s(i, j, 2);
+    	matrizF3(1, 4) = f_3s(i, j+1, 2);
+    	matrizF3(2, 3) = f_3s(i-1, j, 2);
+    	matrizF3(2, 4) = f_3s(i-1, j+1, 2);
+
+	
+    	if (i == r)
+    	  ## Cor Vermelho (1)
+    	  matrizF1(3, 3) = fd(f_1s(i-1, j, 2), f_1s(i, j, 2), h);
+    	  matrizF1(3, 4) = fd(f_1s(i-1, j+1, 2), f_1s(i, j+1, 2), h);
+
+    	  ## Cor Verde (2)
+    	  matrizF2(3, 3) = fd(f_2s(i-1, j, 2), f_2s(i, j, 2), h);
+    	  matrizF2(3, 4) = fd(f_2s(i-1, j+1, 2), f_2s(i, j+1, 2), h);
+
+    	  ## Cor Azul (3)
+    	  matrizF3(3, 3) = fd(f_3s(i-1, j, 2), f_3s(i, j, 2), h);
+    	  matrizF3(3, 4) = fd(f_3s(i-1, j+1, 2), f_3s(i, j+1, 2), h);
+    	else
+    	  ## Cor Vermelho (1)
+    	  matrizF1(3, 3) = fd(f_1s(i-1, j, 2), f_1s(i+1, j, 2), 2*h);
+    	  matrizF1(3, 4) = fd(f_1s(i-1, j+1, 2), f_1s(i+1, j+1, 2), 2*h);
+
+    	  ## Cor Verde (2)
+    	  matrizF2(3, 3) = fd(f_2s(i-1, j, 2), f_2s(i+1, j, 2), 2*h);
+    	  matrizF2(3, 4) = fd(f_2s(i-1, j+1, 2), f_2s(i+1, j+1, 2), 2*h);
+
+    	  ## Cor Azul (3)	                                   
+    	  matrizF3(3, 3) = fd(f_3s(i-1, j, 2), f_3s(i+1, j, 2), 2*h);
+    	  matrizF3(3, 4) = fd(f_3s(i-1, j+1, 2), f_3s(i+1, j+1, 2), 2*h);
+    	endif
+
+
+    	if (i == 2)
+    	  ## Cor Vermelho (1)
+    	  matrizF1(4, 3) = fd(f_1s(i-1, j, 2), f_1s(i, j, 2), h);
+    	  matrizF1(4, 4) = fd(f_1s(i-1, j+1, 2), f_1s(i, j+1, 2), h);
+
+    	  ## Cor Verde (2)
+    	  matrizF2(4, 3) = fd(f_2s(i-1, j, 2), f_2s(i, j, 2), h);
+    	  matrizF2(4, 4) = fd(f_2s(i-1, j+1, 2), f_2s(i, j+1, 2), h);
+
+    	  ## Cor Azul (3)
+    	  matrizF3(4, 3) = fd(f_3s(i-1, j, 2), f_3s(i, j, 2), h);
+    	  matrizF3(4, 4) = fd(f_3s(i-1, j+1, 2), f_3s(i, j+1, 2), h);
 	  
-    	## if(i == tamanho)
-    	##   f_ws(3, 1) = fd(decImg(i, j, w), decImg(i-(k+1), j, w), h);   
-    	##   f_ws(3, 2) = fd(decImg(i, j+(k+1), w), decImg(i-(k+1), j+(k+1), w), h);
-
-	
-    	## else
-    	##   f_ws(3, 1) = fd(decImg(i-(k+1), j, w), decImg(i+(k+1), j, w), 2*h);
-    	##   f_ws(3, 2) = fd(decImg(i-(k+1), j+(k+1), w), decImg(i+(k+1), j+(k+1), w), 2*h)
-	 
-    	## endif
-
-
-    	## if (i - (k + 1) == 1)
-    	##   f_ws(4, 1) = fd(decImg(i, j, w), decImg(i-(k+1), j, w), h);
-    	##   f_ws(4, 2) = fd(decImg(i, j+(k+1), w), decImg(i-(k+1), j+(k+1), w), h);
-
-    	## else	  
-    	##   f_ws(4, 1) = fd(decImg(i-2*(k+1), j, w), decImg(i, j, w), 2*h);
-    	##   f_ws(4, 2) = fd(decImg(i-2*(k+1), j+(k+1), w), decImg(i, j+(k+1), w), 2*h);
+    	else
+    	  ## Cor Vermelho (1)
+    	  matrizF1(4, 3) = fd(f_1s(i-2, j, 2), f_1s(i, j, 2), 2*h);
+    	  matrizF1(4, 4) = fd(f_1s(i-2, j+1, 2), f_1s(i, j+1, 2),2*h);
 	  
-    	## endif
+    	  ## Cor Verde (2)
+    	  matrizF2(4, 3) = fd(f_2s(i-2, j, 2), f_2s(i, j, 2), 2*h);
+    	  matrizF2(4, 4) = fd(f_2s(i-2, j+1, 2), f_2s(i, j+1, 2),2*h);
 
-    	## if (j +(k+1) == tamanho)
-    	##   f_ws(1, 4) = fd(decImg(i, j+(k+1), w), decImg(i, j, w), h);
-    	##   f_ws(2, 4) = fd(decImg(i-(k+1), j+(k+1), w), decImg(i-(k+1), j, w), h);	  
+    	  ## Cor Azul (3)
+    	  matrizF3(4, 3) = fd(f_3s(i-2, j, 2), f_3s(i, j, 2), 2*h);
+    	  matrizF3(4, 4) = fd(f_3s(i-2, j+1, 2), f_3s(i, j+1, 2),2*h);
+    	endif
 
-    	## else	  
-    	##   f_ws(1, 4) = fd(decImg(i, j+2*(k+1) , w), decImg(i, j, w), 2*h);	  	  
-    	##   f_ws(2, 4) = fd(decImg(i-(k+1),j+2*(k+1) , w), decImg(i-(k+1), j, w), 2*h);	  	  
+    	coef1 = invB * matrizF1 * transInvB;
+    	coef2 = invB * matrizF2 * transInvB;
+    	coef3 = invB * matrizF3 * transInvB;	
+	
+    	
+    	xc = h;
+    	for X = x+k+1:-1:x
+    	  xc -= (h/(k+1));
+    	  yc = 0;
 
-	## endif 
-
-
-	## if (j == 1)
-	##   f_ws(1, 3) = fd(decImg(i, j+(k+1), w), decImg(i, j, w), h);
-	##   f_ws(2, 3) = fd(decImg(i-(k+1), j+(k+1), w), decImg(i-(k+1), j, w), h);
-
-	##   aux_w = fd(decImg(i+(k+1), , w), decImg()); 
-
-	## else
-	##   f_ws(1, 3) = fd(decImg(i, j+(k+1), w), decImg(i, j-(k+1), w), 2*h);
-	##   f_ws(1, 3) = fd(decImg(i-(k+1), j+(k+1), w), decImg(i-(k+1), j-(k+1), w), 2*h);
+	  matrizX = [1, xc, xc*xc, xc*xc*xc];
 	  
-	## endif
+	  for Y = y:1:y+k+1
+    	    yc += (h/(k+1));
 
-	## aux_w = fd(decImg(i, j, w), decImg(i, j, w), 2*h);
-	
-	## f_ws(
-
-
-
-	
-	
+	    matrizY = [1; yc; yc*yc; yc*yc*yc];
+	    
+	    decImg(X, Y, 1) = matrizX * coef1 * matrizY;
+	    decImg(X, Y, 2) = matrizX * coef2 * matrizY;
+	    decImg(X, Y, 3) = matrizX * coef3 * matrizY; 
+	    
+    	  endfor
+    	endfor	    	
       endfor
     endfor
-    
-        
-   endif
+    imshow(decImg);
+  endif
       
-				#  imshow(decImg);
+  
   imwrite(decImg, "decompressed.png");
 endfunction
 
@@ -189,8 +280,3 @@ function ret = fd(a, b, h)
   ret = (a - b)/h;
 endfunction
 
-
-
-function ret = derivaF(img, a, b, h)
-  
-endfunction
