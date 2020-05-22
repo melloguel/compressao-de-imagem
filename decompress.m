@@ -115,7 +115,7 @@ function decompress(compressedImg, method, k, h)
     	endfor
     endfor
 
-
+    
     matrizB = [[1, 0,   0,     0];
     	       [1, h, h*h, h*h*h];
     	       [0, 1,   0,     0];
@@ -249,7 +249,7 @@ function decompress(compressedImg, method, k, h)
 	
     	
     	xc = h;
-    	for X = x+k+1:-1:x
+    	for X = x:-1:x-(k+1)
     	  xc -= (h/(k+1));
     	  yc = 0;
 
@@ -265,10 +265,9 @@ function decompress(compressedImg, method, k, h)
 	    decImg(X, Y, 3) = matrizX * coef3 * matrizY; 
 	    
     	  endfor
-    	endfor	    	
+    	endfor
       endfor
     endfor
-    imshow(decImg);
   endif
       
   
