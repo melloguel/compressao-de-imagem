@@ -245,21 +245,19 @@ function decompress(compressedImg, method, k, h)
     	coef3 = invB * matrizF3 * transInvB;	
 	
     	
-    	xc = h;
-    	for X = x:-1:x-(k+1)
-    	  xc -= (h/(k+1));
-    	  yc = 0;
 
-	  matrizX = [1, xc, xc*xc, xc*xc*xc];
-	  
-	  for Y = y:1:y+k+1
-    	    yc += (h/(k+1));
+    	##for X = x:-1:x-(k+1)
+	for X = 0:1:(k+1)
+	  xc = X*(h/(k+1));    	
+	  matrizX = [1, xc, xc*xc, xc*xc*xc];	  
+	  for Y = 0:1:(k+1)
+    	    yc = Y*(h/(k+1));
 
 	    matrizY = [1; yc; yc*yc; yc*yc*yc];
 	    
-	    decImg(X, Y, 1) = matrizX * coef1 * matrizY;
-	    decImg(X, Y, 2) = matrizX * coef2 * matrizY;
-	    decImg(X, Y, 3) = matrizX * coef3 * matrizY; 
+	    decImg(x-X, Y+y, 1) = matrizX * coef1 * matrizY;
+	    decImg(x-X, Y+y, 2) = matrizX * coef2 * matrizY;
+	    decImg(x-X, Y+y, 3) = matrizX * coef3 * matrizY; 
 	    
     	  endfor
     	endfor
