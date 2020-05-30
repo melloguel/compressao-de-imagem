@@ -5,7 +5,7 @@ function compress (originalImg, k);
 
   [imgRead,imgMap] = imread(originalImg);
   imgRead = im2double(imgRead);
-  p = []; # Indices dos pixels que serão removidos
+  p = []; ## Indices dos pixels que serão removidos
   index = 1;
   for i = 1:rows(imgRead)
      if mod(i - 1, k+1) != 0
