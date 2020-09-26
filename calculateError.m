@@ -15,4 +15,4 @@ function ret = calculateError(originalImg, decompressedImg)
 
   ret = (errR + errG + errB)/3;
 endfunction
-    
+

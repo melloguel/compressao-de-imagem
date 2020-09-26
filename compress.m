@@ -8,10 +8,10 @@ function compress (originalImg, k);
   p = []; ## Indices dos pixels que serão removidos
   index = 1;
   for i = 1:rows(imgRead)
-     if mod(i - 1, k+1) != 0
-       p(index) = i;
-       index++;
-     endif
+    if mod(i - 1, k+1) != 0
+      p(index) = i;
+      index++;
+    endif
   endfor
   
   imgRead(p, :) = [];

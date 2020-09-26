@@ -1,5 +1,6 @@
 #! /usr/bin/env octave
-## Sim
+
+
 function decompress(compressedImg, method, k, h) 
   [imgRead,imgMap] = imread(compressedImg);
   imgRead = im2double(imgRead);
@@ -9,18 +10,17 @@ function decompress(compressedImg, method, k, h)
   decImg = zeros(tamanho, tamanho, 3); # matriz de zeros de formato tam*tam*3
 
 
-
   ## imwrite(decImg, "step.png");
   ## Chama o metodo correto
   if (method == 1) # Interpolação bilinear por partes
 
-      for i = 1:r
-	ii = (k+1) * (i - 1) + 1;
-	for j = 1:r
-	  jj = (k+1) * (j - 1) + 1;
-	  decImg(ii, jj, 1:3) = imgRead(i, j, 1:3);
-	endfor
+    for i = 1:r
+      ii = (k+1) * (i - 1) + 1;
+      for j = 1:r
+	jj = (k+1) * (j - 1) + 1;
+	decImg(ii, jj, 1:3) = imgRead(i, j, 1:3);
       endfor
+    endfor
 
     matrizH = [[1, 0, 0, 0];
 	       [1, 0, h, 0];
@@ -44,7 +44,7 @@ function decompress(compressedImg, method, k, h)
 	matrizF2 =  [decImg(i, j, 2);	 
 		     decImg(i, j+k+1, 2);	 
 		     decImg(i+k+1, j, 2);	 
-		    decImg(i+k+1, j+k+1, 2)];
+		     decImg(i+k+1, j+k+1, 2)];
 	coef2 = invH * matrizF2;
 
 	matrizF3 =  [decImg(i, j, 3);	 
@@ -77,39 +77,39 @@ function decompress(compressedImg, method, k, h)
     
     for i = 1:r
       ii = (k+1) * (i - 1) + 1;
-    	for j = 1:r
-    	  jj = (k+1) * (j - 1) + 1;
-    	  decImg(ii, jj, 1:3) = imgRead(i, j, 1:3);
+      for j = 1:r
+    	jj = (k+1) * (j - 1) + 1;
+    	decImg(ii, jj, 1:3) = imgRead(i, j, 1:3);
 
-    	  if (i == 1)
-    	    f_1s(1, j, 1) = fd(imgRead(1, j, 1), imgRead(2, j, 1), h);
-    	    f_2s(1, j, 1) = fd(imgRead(1, j, 2), imgRead(2, j, 2), h);
-    	    f_3s(1, j, 1) = fd(imgRead(1, j, 3), imgRead(2, j, 3), h);	    
-    	  elseif(i == r)
-    	    f_1s(r, j, 1) = fd(imgRead(r-1, j, 1), imgRead(r, j, 1), h);
-    	    f_2s(r, j, 1) = fd(imgRead(r-1, j, 2), imgRead(r, j, 2), h);
-    	    f_3s(r, j, 1) = fd(imgRead(r-1, j, 3), imgRead(r, j, 3), h);	    
-    	  else
-    	    f_1s(i, j, 1) = fd(imgRead(i-1, j, 1), imgRead(i+1, j, 1), 2*h);
-    	    f_2s(i, j, 1) = fd(imgRead(i-1, j, 2), imgRead(i+1, j, 2), 2*h);
-    	    f_3s(i, j, 1) = fd(imgRead(i-1, j, 3), imgRead(i+1, j, 3), 2*h);	    
-    	  endif
+    	if (i == 1)
+    	  f_1s(1, j, 1) = fd(imgRead(1, j, 1), imgRead(2, j, 1), h);
+    	  f_2s(1, j, 1) = fd(imgRead(1, j, 2), imgRead(2, j, 2), h);
+    	  f_3s(1, j, 1) = fd(imgRead(1, j, 3), imgRead(2, j, 3), h);	    
+    	elseif(i == r)
+    	  f_1s(r, j, 1) = fd(imgRead(r-1, j, 1), imgRead(r, j, 1), h);
+    	  f_2s(r, j, 1) = fd(imgRead(r-1, j, 2), imgRead(r, j, 2), h);
+    	  f_3s(r, j, 1) = fd(imgRead(r-1, j, 3), imgRead(r, j, 3), h);	    
+    	else
+    	  f_1s(i, j, 1) = fd(imgRead(i-1, j, 1), imgRead(i+1, j, 1), 2*h);
+    	  f_2s(i, j, 1) = fd(imgRead(i-1, j, 2), imgRead(i+1, j, 2), 2*h);
+    	  f_3s(i, j, 1) = fd(imgRead(i-1, j, 3), imgRead(i+1, j, 3), 2*h);	    
+    	endif
 
-    	  if (j == 1)
-    	    f_1s(i, 1, 2) = fd(imgRead(i, 2, 1), imgRead(i, 1, 1), h);
-    	    f_2s(i, 1, 2) = fd(imgRead(i, 2, 2), imgRead(i, 1, 2), h);
-    	    f_3s(i, 1, 2) = fd(imgRead(i, 2, 3), imgRead(i, 1, 3), h);	    	    
-    	  elseif(j == r)
-    	    f_1s(i, r, 2) = fd(imgRead(i, r, 1), imgRead(i, r-1, 1), h);
-    	    f_2s(i, r, 2) = fd(imgRead(i, r, 2), imgRead(i, r-1, 2), h);
-    	    f_3s(i, r, 2) = fd(imgRead(i, r, 3), imgRead(i, r-1, 3), h);	    
-    	  else
-    	    f_1s(i, j, 2) = fd(imgRead(i, j+1, 1), imgRead(i, j-1, 1), 2*h);
-    	    f_2s(i, j, 2) = fd(imgRead(i, j+1, 2), imgRead(i, j-1, 2), 2*h);
-    	    f_3s(i, j, 2) = fd(imgRead(i, j+1, 3), imgRead(i, j-1, 3), 2*h);	    
-    	  endif
-	  
-    	endfor
+    	if (j == 1)
+    	  f_1s(i, 1, 2) = fd(imgRead(i, 2, 1), imgRead(i, 1, 1), h);
+    	  f_2s(i, 1, 2) = fd(imgRead(i, 2, 2), imgRead(i, 1, 2), h);
+    	  f_3s(i, 1, 2) = fd(imgRead(i, 2, 3), imgRead(i, 1, 3), h);	    	    
+    	elseif(j == r)
+    	  f_1s(i, r, 2) = fd(imgRead(i, r, 1), imgRead(i, r-1, 1), h);
+    	  f_2s(i, r, 2) = fd(imgRead(i, r, 2), imgRead(i, r-1, 2), h);
+    	  f_3s(i, r, 2) = fd(imgRead(i, r, 3), imgRead(i, r-1, 3), h);	    
+    	else
+    	  f_1s(i, j, 2) = fd(imgRead(i, j+1, 1), imgRead(i, j-1, 1), 2*h);
+    	  f_2s(i, j, 2) = fd(imgRead(i, j+1, 2), imgRead(i, j-1, 2), 2*h);
+    	  f_3s(i, j, 2) = fd(imgRead(i, j+1, 3), imgRead(i, j-1, 3), 2*h);	    
+    	endif
+	
+      endfor
     endfor
 
     
@@ -264,7 +264,7 @@ function decompress(compressedImg, method, k, h)
       endfor
     endfor
   endif
-      
+  
   
   imwrite(decImg, "decompressed.png");
 endfunction
